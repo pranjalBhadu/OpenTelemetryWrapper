@@ -73,8 +73,8 @@ class TelemetryProvider {
             }
         }
     }
-    endTracing(span, endTime) {
-        span.end(endTime);
+    endTracing(span) {
+        span.end();
     }
 }
 exports.TelemetryProvider = TelemetryProvider;
