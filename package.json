@@ -1,6 +1,6 @@
 {
   "name": "wrapperopentelemetry",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A npm package containing user defined functions for opentelemetry",
   "main": "dist/TelemetryProvider.js",
   "types": "dist/TelemetryProvider.d.ts",
