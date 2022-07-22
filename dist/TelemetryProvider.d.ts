@@ -19,4 +19,5 @@ export declare class TelemetryProvider {
     setSpanTags(span: Span, message: MessageContext): void;
     setInitialTags(span: Span): void;
     endTracing(span: Span, endTime?: TimeInput): void;
+    getMessageContext(): MessageContext;
 }

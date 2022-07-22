@@ -1,4 +1,3 @@
-import {Attributes} from '@opentelemetry/api'
 export class MessageContext{
     public ApplicationName:string = "Telemetry Application";
     public CreatedBy: string = "Telemetry User";

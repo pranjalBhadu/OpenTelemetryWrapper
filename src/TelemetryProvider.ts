@@ -105,4 +105,8 @@ export class TelemetryProvider{
     endTracing(span: Span, endTime?: TimeInput): void{
         span.end(endTime);
     }
+
+    getMessageContext(): MessageContext{
+        return new MessageContext();
+    }
 }

@@ -95,5 +95,8 @@ class TelemetryProvider {
     endTracing(span, endTime) {
         span.end(endTime);
     }
+    getMessageContext() {
+        return new MessageContext_1.MessageContext();
+    }
 }
 exports.TelemetryProvider = TelemetryProvider;
