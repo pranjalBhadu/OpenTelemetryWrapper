@@ -5,6 +5,7 @@ import {AzureMonitorTraceExporter} from "@azure/monitor-opentelemetry-exporter"
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { trace, SpanKind, Context, Span, Tracer, context, SpanContext, ROOT_CONTEXT, TimeInput, Attributes }  from "@opentelemetry/api";
 import { TelemetryConstants } from "./TelemetryConstants";
+import {MessageContext} from "./MessageContext";
 
 export class TelemetryProvider{
     TelemetryResource: Resource;
@@ -36,7 +37,7 @@ export class TelemetryProvider{
         this.TelemetryTracer = trace.getTracer(TracerName, TracerVersion)
     }
 
-    startTracing(spanName: string, parentSpan: Span|undefined = undefined, kind: number = 0, attributes: Attributes|null = null): Span{
+    startTracing(spanName: string, parentSpan: Span|undefined = undefined, kind: number = 0, message: MessageContext|undefined = undefined): Span{
         const spanKind: SpanKind =  this.getSpanKind(kind);
         let ctx: Context;
         if(parentSpan == undefined){
@@ -45,8 +46,10 @@ export class TelemetryProvider{
             ctx = trace.setSpan(this.getActiveContext(), parentSpan)
         }
         const span: Span = this.TelemetryTracer.startSpan(spanName, {kind: spanKind}, ctx);
-        if(attributes != undefined){
-            this.setSpanTags(span, attributes)
+        if(message != undefined){
+            this.setSpanTags(span, message);
+        }else{
+            this.setInitialTags(span);
         }
         return span
     }
@@ -71,15 +74,31 @@ export class TelemetryProvider{
         return SpanKind.CONSUMER
     }
 
-    setSpanTags(span: Span, attributes: Object): void{
-        if(attributes == null){
-            throw new Error("NULL MESSAGE!!")
+    setSpanTags(span: Span, message: MessageContext): void {
+        if(message == null){
+            throw new Error("NULL MESSAGE PASSED!!")
         }
 
         if(span.isRecording()){
-            for (const [key, value] of Object.entries(attributes)){
-                span.setAttribute(key, value)
+            span.setAttribute(TelemetryConstants.TelemetryAppName, message.ApplicationName);
+            span.setAttribute(TelemetryConstants.CreatedBy, message.CreatedBy)
+            span.setAttribute(TelemetryConstants.CreatedAt, message.CreatedAt)
+            span.setAttribute(TelemetryConstants.UserId, message.UserId)
+            if(message.CustomProperties != {}){
+                for (const [key, value] of Object.entries(message.CustomProperties)){
+                    span.setAttribute(TelemetryConstants.TelemetryCustomProperties + "." +key, value)
+                }
             }
+        }
+    }
+
+    setInitialTags(span: Span): void{
+        const message: MessageContext = new MessageContext();
+        if(span.isRecording()){
+            span.setAttribute(TelemetryConstants.TelemetryAppName, message.ApplicationName);
+            span.setAttribute(TelemetryConstants.CreatedBy, message.CreatedBy)
+            span.setAttribute(TelemetryConstants.CreatedAt, message.CreatedAt)
+            span.setAttribute(TelemetryConstants.UserId, message.UserId)
         }
     }
 

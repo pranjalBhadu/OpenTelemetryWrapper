@@ -8,6 +8,7 @@ const monitor_opentelemetry_exporter_1 = require("@azure/monitor-opentelemetry-e
 const sdk_trace_base_1 = require("@opentelemetry/sdk-trace-base");
 const api_1 = require("@opentelemetry/api");
 const TelemetryConstants_1 = require("./TelemetryConstants");
+const MessageContext_1 = require("./MessageContext");
 class TelemetryProvider {
     constructor(TracerName, TracerVersion, ConnectionString) {
         this.TelemetryExporter = new monitor_opentelemetry_exporter_1.AzureMonitorTraceExporter({
@@ -28,7 +29,7 @@ class TelemetryProvider {
         api_1.trace.setGlobalTracerProvider(this.Provider);
         this.TelemetryTracer = api_1.trace.getTracer(TracerName, TracerVersion);
     }
-    startTracing(spanName, parentSpan = undefined, kind = 0, attributes = null) {
+    startTracing(spanName, parentSpan = undefined, kind = 0, message = undefined) {
         const spanKind = this.getSpanKind(kind);
         let ctx;
         if (parentSpan == undefined) {
@@ -38,8 +39,11 @@ class TelemetryProvider {
             ctx = api_1.trace.setSpan(this.getActiveContext(), parentSpan);
         }
         const span = this.TelemetryTracer.startSpan(spanName, { kind: spanKind }, ctx);
-        if (attributes != undefined) {
-            this.setSpanTags(span, attributes);
+        if (message != undefined) {
+            this.setSpanTags(span, message);
+        }
+        else {
+            this.setInitialTags(span);
         }
         return span;
     }
@@ -63,18 +67,33 @@ class TelemetryProvider {
             return api_1.SpanKind.PRODUCER;
         return api_1.SpanKind.CONSUMER;
     }
-    setSpanTags(span, attributes) {
-        if (attributes == null) {
-            throw new Error("NULL MESSAGE!!");
+    setSpanTags(span, message) {
+        if (message == null) {
+            throw new Error("NULL MESSAGE PASSED!!");
         }
         if (span.isRecording()) {
-            for (const [key, value] of Object.entries(attributes)) {
-                span.setAttribute(key, value);
+            span.setAttribute(TelemetryConstants_1.TelemetryConstants.TelemetryAppName, message.ApplicationName);
+            span.setAttribute(TelemetryConstants_1.TelemetryConstants.CreatedBy, message.CreatedBy);
+            span.setAttribute(TelemetryConstants_1.TelemetryConstants.CreatedAt, message.CreatedAt);
+            span.setAttribute(TelemetryConstants_1.TelemetryConstants.UserId, message.UserId);
+            if (message.CustomProperties != {}) {
+                for (const [key, value] of Object.entries(message.CustomProperties)) {
+                    span.setAttribute(TelemetryConstants_1.TelemetryConstants.TelemetryCustomProperties + "." + key, value);
+                }
             }
         }
     }
-    endTracing(span) {
-        span.end();
+    setInitialTags(span) {
+        const message = new MessageContext_1.MessageContext();
+        if (span.isRecording()) {
+            span.setAttribute(TelemetryConstants_1.TelemetryConstants.TelemetryAppName, message.ApplicationName);
+            span.setAttribute(TelemetryConstants_1.TelemetryConstants.CreatedBy, message.CreatedBy);
+            span.setAttribute(TelemetryConstants_1.TelemetryConstants.CreatedAt, message.CreatedAt);
+            span.setAttribute(TelemetryConstants_1.TelemetryConstants.UserId, message.UserId);
+        }
+    }
+    endTracing(span, endTime) {
+        span.end(endTime);
     }
 }
 exports.TelemetryProvider = TelemetryProvider;
