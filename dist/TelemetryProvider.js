@@ -43,6 +43,9 @@ class TelemetryProvider {
         }
         return span;
     }
+    addTraceEvent(span, name, attrOrStartTime, startTime) {
+        span.addEvent(name, attrOrStartTime, startTime);
+    }
     getTelemetryTracer() {
         return this.TelemetryTracer;
     }
@@ -70,8 +73,8 @@ class TelemetryProvider {
             }
         }
     }
-    endTracing(span) {
-        span.end();
+    endTracing(span, endTime) {
+        span.end(endTime);
     }
 }
 exports.TelemetryProvider = TelemetryProvider;
